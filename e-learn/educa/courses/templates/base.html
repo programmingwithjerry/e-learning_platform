@@ -1,37 +1,38 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>{% block title %}Educa{% endblock %}</title>
-    <link href="{% static "css/base.css" %}" rel="stylesheet">
+{% load static %}  <!-- Load static files (CSS, JS, images) for the template -->
+
+<!DOCTYPE html>  <!-- Define the document type as HTML -->
+<html>  <!-- Start of the HTML document -->
+  <head>  <!-- Head section of the document -->
+    <meta charset="utf-8" />  <!-- Set character encoding to UTF-8 -->
+    <title>{% block title %}Educa{% endblock %}</title>  <!-- Title of the page, can be overridden by child templates -->
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">  <!-- Link to the static CSS file -->
   </head>
-  <body>
-    <div id="header">
-      <a href="/" class="logo">Educa</a>
-      <ul class="menu">
-        {% if request.user.is_authenticated %}
-          <li>
-            <form action="{% url "logout" %}" method="post">
-              <button type="submit">Sign out</button>
-              {% csrf_token %}
+  <body>  <!-- Start of the body section -->
+    <div id="header">  <!-- Header section of the page -->
+      <a href="/" class="logo">Educa</a>  <!-- Logo that links to the homepage -->
+      <ul class="menu">  <!-- Navigation menu -->
+        {% if request.user.is_authenticated %}  <!-- Check if the user is authenticated -->
+          <li>  <!-- If authenticated, show sign-out option -->
+            <form action="{% url 'logout' %}" method="post">  <!-- Form for logging out -->
+              <button type="submit">Sign out</button>  <!-- Submit button to log out -->
+              {% csrf_token %}  <!-- CSRF token for security -->
             </form>
           </li>
-        {% else %}
-          <li><a href="{% url "login" %}">Sign in</a></li>
+        {% else %}  <!-- If not authenticated, show sign-in option -->
+          <li><a href="{% url 'login' %}">Sign in</a></li>  <!-- Link to the login page -->
         {% endif %}
       </ul>
     </div>
-    <div id="content">
-      {% block content %}
+    <div id="content">  <!-- Content section of the page -->
+      {% block content %}  <!-- Block for main content, can be overridden by child templates -->
       {% endblock %}
     </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', (event) => {
-        // DOM loaded
-        {% block domready %}
+    <script>  <!-- JavaScript section -->
+      document.addEventListener('DOMContentLoaded', (event) => {  <!-- Wait for the DOM to fully load -->
+        // DOM loaded  <!-- Placeholder comment indicating DOM readiness -->
+        {% block domready %}  <!-- Block for scripts that should run when the DOM is ready -->
         {% endblock %}
       })
     </script>
   </body>
-</html>
+</html>  <!-- End of the HTML document -->
