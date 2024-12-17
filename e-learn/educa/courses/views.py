@@ -12,16 +12,22 @@ from django.contrib.auth.mixins import (
 )
 
 
+# Define the view for managing the list of courses, inheriting from ListView
 class ManageCourseListView(ListView):
-	model = Course
-	template_name = 'courses/manage/course/list.html'
+    # Specify the model to use for this view (Course model)
+    model = Course
+    # Define the template to render for this view
+    template_name = 'courses/manage/course/list.html'
 
-	def get_queryset(self):
-		qs = super().get_queryset()
-		return qs.filter(owner=self.request.user)
+    #Override the get_queryset method to filter courses by thelogged-in user
+    def get_queryset(self):
+        # Get the base queryset from the ListView
+        qs = super().get_queryset()
+        #Filter the queryset to only include courses owned by thecurrent user
+        return qs.filter(owner=self.request.user)
 
 
-class OwnerMixin:
+"""class OwnerMixin:
 	def get_queryset(self):
 		qs = super().get_queryset()
 		return qs.filter(owner=self.request.user)
@@ -90,4 +96,4 @@ class CourseModuleUpdateView(TemplateResponseMixin, View):
 			return redirect('manage_course_list')
 		return self.render_to_response(
 			{'course': self.course, 'formset': formset}
-		)
+		)"""
