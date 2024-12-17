@@ -109,33 +109,49 @@ class Content(models.Model):
         ordering = ['order']
 
 
-"""class ItemBase(models.Model):
-	owner = models.ForeignKey(User,
-		related_name='%(class)s_related',
-		on_delete=models.CASCADE
-	)
-	title = models.CharField(max_length=250)
-	created = models.DateTimeField(auto_now_add=True)
-	updated = models.DateTimeField(auto_now=True)
+# Base model to define common fields for content types
+class ItemBase(models.Model):
+    # ForeignKey linking the item to its owner (user)
+    owner = models.ForeignKey(
+        User,  # Reference to Django's built-in User model
+        related_name='%(class)s_related',
+        on_delete=models.CASCADE  # Delete the item if the user is deleted
+    )
+    # Title of the item with a max length of 250 characters
+    title = models.CharField(max_length=250)
+    # Timestamp for when the item is created; auto-set on creation
+    created = models.DateTimeField(auto_now_add=True)
+    # Timestamp for when the item is last updated; auto-updated on save
+    updated = models.DateTimeField(auto_now=True)
 
-	class Meta:
-		abstract = True
+    class Meta:
+        # Mark this model as abstract; it won't create a database table
+        abstract = True
 
-	def __str__(self):
-		return self.title
+    def __str__(self):
+        # String representation of the item
+        return self.title
 
 
+# Model for text-based content
 class Text(ItemBase):
-	content = models.TextField()
+    # Field to store the text content
+    content = models.TextField()
 
 
+# Model for file-based content
 class File(ItemBase):
-	file = models.FileField(upload_to='files')
+    # Field to store uploaded files; files are saved in the 'files' directory
+    file = models.FileField(upload_to='files')
 
 
+# Model for image-based content
 class Image(ItemBase):
-	file = models.FileField(upload_to='images')
+    # Field to store uploaded images;images are saved in the'images'directory
+    file = models.FileField(upload_to='images')
 
 
+# Model for video-based content
 class Video(ItemBase):
-	url = models.URLField()"""
+    # Field to store video URLs
+    url = models.URLField()
