@@ -1,13 +1,9 @@
-"""from django.contrib.contenttypes.fields import GenericForeignKey
+# Import the necessary models module from Django
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
-from .fields import OrderField
-from django.db import models"""
-
-
-# Import the necessary models module from Django
+#from .fields import OrderField
 from django.db import models
-from django.contrib.auth.models import User
 
 # Subject model represents the subject categories for courses
 class Subject(models.Model):
@@ -81,28 +77,39 @@ class Module(models.Model):
         return f'{self.order}. {self.title}'
 
 
-"""class Content(models.Model):
-	module = models.ForeignKey(
-		Module,
-		related_name='contents',
-		on_delete=models.CASCADE,
-	)
-	content_type = models.ForeignKey(
-		ContentType,
-		on_delete=models.CASCADE,
-		limit_choices_to={
-			'model__in':('text', 'video', 'image', 'file')
-		}
-	)
-	object_id = models.PositiveIntegerField()
-	item = GenericForeignKey('content_type', 'object_id')
-	order = OrderField(blank=True, for_fields=['module'])
+"""Content model represents generic content items
+   (text, video, image, file) within a module
+"""
+class Content(models.Model):
+    # ForeignKey linking the content to a specific module
+    module = models.ForeignKey(
+        Module,  # Reference to the Module model
+        related_name='contents',  # Reverse relationship name
+        on_delete=models.CASCADE  # Delete content if the module is deleted
+    )
+    # ForeignKey to the ContentType model for generic relationships
+    content_type = models.ForeignKey(
+        ContentType,  # Reference to Django's ContentType framework
+        on_delete=models.CASCADE, #Delete content ifthe ContentType isdeleted
+        limit_choices_to={  # Restrict choices to specific models
+            'model__in': ('text', 'video', 'image', 'file')
+        }
+    )
+    # PositiveIntegerField to store the ID of the related object
+    object_id = models.PositiveIntegerField()
+    """GenericForeignKey to create a relationship to
+       any model specified in content_type
+    """
+    item = GenericForeignKey('content_type', 'object_id')
+    # Custom order field to define the order of content within a module
+    order = OrderField(blank=True, for_fields=['module'])
 
-	class Meta:
-		ordering = ['order']
+    class Meta:
+        # Order content items by the 'order' field within a module
+        ordering = ['order']
 
 
-class ItemBase(models.Model):
+"""class ItemBase(models.Model):
 	owner = models.ForeignKey(User,
 		related_name='%(class)s_related',
 		on_delete=models.CASCADE
