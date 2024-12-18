@@ -1,27 +1,40 @@
+<!-- Extend the base template to inherit the common layout and styles -->
 {% extends "base.html" %}
 
+<!-- Block to set the page title -->
 {% block title %}
-
+  <!-- Check if an object is provided -->
   {% if object %}
+    <!-- Title for editing an existing course -->
     Edit course "{{ object.title }}"
   {% else %}
+    <!-- Title for creating a new course -->
     Create a new course
   {% endif %}
 {% endblock %}
 
+<!-- Block to define the main content of the page -->
 {% block content %}
   <h1>
+    <!-- Check if an object is provided -->
     {% if object %}
+      <!-- Heading for editing an existing course -->
       Edit course "{{ object.title }}"
     {% else %}
+      <!-- Heading for creating a new course -->
       Create a new course
     {% endif %}
   </h1>
   <div class="module">
+    <!-- Section for course information -->
     <h2>Course info</h2>
+    <!-- Form to edit or create a course -->
     <form method="post">
+      <!-- Render the form fields as paragraphs -->
       {{ form.as_p }}
+      <!-- Include CSRF token for security -->
       {% csrf_token %}
+      <!-- Submit button to save the course -->
       <p><input type="submit" value="Save course"></p>
     </form>
   </div>
