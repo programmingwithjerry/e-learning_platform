@@ -1,22 +1,31 @@
+<!-- Extend the base template to inherit the common layout and styles -->
 {% extends "base.html" %}
 
+<!-- Block to set the page title -->
 {% block title %}My courses{% endblock %}
 
+<!-- Block to define the main content of the page -->
 {% block content %}
   <h1>My courses</h1>
   <div class="module">
+    <!-- Loop through the list of courses (object_list) passed to the template -->
     {% for course in object_list %}
       <div class="course-info">
+        <!-- Display the title of each course -->
         <h3>{{ course.title }}</h3>
         <p>
+          <!-- Link to edit the current course, passing the course ID to the URL -->
           <a href="{% url "course_edit" course.id %}">Edit</a>
+          <!-- Link to delete the current course, passing the course ID to the URL -->
           <a href="{% url "course_delete" course.id %}">Delete</a>
         </p>
       </div>
     {% empty %}
+      <!-- Message to display if there are no courses in the list -->
       <p>You haven't created any courses yet.</p>
     {% endfor %}
     <p>
+      <!-- Link to create a new course -->
       <a href="{% url "course_create" %}" class="button">Create new course</a>
     </p>
   </div>
