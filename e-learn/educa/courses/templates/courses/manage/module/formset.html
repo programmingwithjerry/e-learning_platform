@@ -1,0 +1,29 @@
+<!-- Extend the base template to inherit the common layout and styles -->
+{% extends "base.html" %}
+
+<!-- Block to set the page title -->
+{% block title %}
+  <!-- Title for editing the specified course -->
+  Edit "{{ course.title }}"
+{% endblock %}
+
+<!-- Block to define the main content of the page -->
+{% block content %}
+  <!-- Heading for editing the specified course -->
+  <h1>Edit "{{ course.title }}"</h1>
+  <div class="module">
+    <!-- Section for editing course modules -->
+    <h2>Course modules</h2>
+    <!-- Form to edit the course modules -->
+    <form method="post">
+      <!-- Render the formset for modules -->
+      {{ formset }}
+      <!-- Include the management form for formset handling -->
+      {{ formset.management_form }}
+      <!-- Include CSRF token for security -->
+      {% csrf_token %}
+      <!-- Submit button to save the modules -->
+      <input type="submit" value="Save modules">
+    </form>
+  </div>
+{% endblock %}
