@@ -1,0 +1,38 @@
+<!-- Extend the base template -->
+{% extends "base.html" %}
+
+<!-- Define the title block -->
+{% block title %}
+  <!-- Check if the object exists to display the appropriate title -->
+  {% if object %}
+    Edit content "{{ object.title }}"
+  {% else %}
+    Add new content
+  {% endif %}
+{% endblock %}
+
+<!-- Define the content block -->
+{% block content %}
+  <!-- Page header displaying the action being performed -->
+  <h1>
+    {% if object %}
+      Edit content "{{ object.title }}"
+    {% else %}
+      Add new content
+    {% endif %}
+  </h1>
+  <!-- Content section -->
+  <div class="module">
+    <!-- Display course information -->
+    <h2>Course info</h2>
+    <!-- Form for creating or editing content -->
+    <form action="" method="post" enctype="multipart/form-data">
+      <!-- Render the form fields -->
+      {{ form.as_p }}
+      <!-- Include CSRF token for security -->
+      {% csrf_token %}
+      <!-- Submit button to save the content -->
+      <p><input type="submit" value="Save content"></p>
+    </form>
+  </div>
+{% endblock %}
