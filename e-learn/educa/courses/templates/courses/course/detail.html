@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+<!-- Extend the base HTML template -->
+
+{% block title %}
+    <!-- Define the title block for the page -->
+    {{ object.title }}
+    <!-- Display the title of the current object (course) -->
+{% endblock %}
+
+{% block content %}
+    <!-- Define the main content block -->
+    {% with subject=object.subject %}
+        <!-- Retrieve and assign the subject of the current object (course) -->
+
+        <h1>
+            <!-- Display the course title as the main heading -->
+            {{ object.title }}
+        </h1>
+
+        <div class="module">
+            <!-- Section for the course details -->
+
+            <h2>Overview</h2>
+            <!-- Subheading for the overview section -->
+
+            <p>
+                <!-- Display the subject as a clickable link -->
+                <a href="{% url "course_list_subject" subject.slug %}">
+                    {{ subject.title }}
+                </a>.
+                <!-- Display the total number of modules in the course -->
+                {{ object.modules.count }} modules.
+                <!-- Display the name of the instructor -->
+                Instructor: {{ object.owner.get_full_name }}
+            </p>
+
+            <!-- Display the course overview content with line breaks converted to HTML -->
+            {{ object.overview|linebreaks }}
+        </div>
+    {% endwith %}
+{% endblock %}
