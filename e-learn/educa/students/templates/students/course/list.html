@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+<!-- Extend the base template -->
+
+{% block title %}My courses{% endblock %}
+<!-- Set the page title -->
+
+{% block content %}
+<!-- Begin the content block -->
+<h1>My courses</h1>
+<div class="module">
+    <!-- Display the list of courses the student is enrolled in -->
+    {% for course in object_list %}
+    <div class="course-info">
+        <h3>{{ course.title }}</h3>
+        <p><a href="{% url "student_course_detail" course.id %}">Access contents</a></p>
+        <!-- Link to access the course content -->
+    </div>
+    {% empty %}
+    <!-- Message displayed when the student is not enrolled in any courses -->
+    <p>
+        You are not enrolled in any courses yet.
+        <a href="{% url "course_list" %}">Browse courses</a> to enroll in a course.
+    </p>
+    {% endfor %}
+</div>
+<!-- End the module section -->
+{% endblock %}
+<!-- End the content block -->

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}
+<!-- Display the title of the object in the page title -->
+{{ object.title }}
+{% endblock %}
+
+{% block content %}
+<!-- Main content block starts here -->
+<h1>
+    <!-- Display the title of the selected module -->
+    {{ module.title }}
+</h1>
+<div class="contents">
+    <!-- List of modules -->
+    <h3>Modules</h3>
+    <ul id="modules">
+        {% for m in object.modules.all %}
+        <li data-id="{{ m.id }}" {% if m == module %}class="selected"{% endif %}>
+            <!-- Link to the detail view of each module -->
+            <a href="{% url "student_course_detail_module" object.id m.id %}">
+                <span>
+                    Module <span class="order">{{ m.order|add:1 }}</span>
+                </span>
+                <br>
+                {{ m.title }}
+            </a>
+        </li>
+        {% empty %}
+        <!-- Message displayed when no modules are available -->
+        <li>No modules yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+<div class="module">
+    <!-- Render the contents of the selected module -->
+    {% for content in module.contents.all %}
+    {% with item=content.item %}
+    <h2>{{ item.title }}</h2>
+    {{ item.render }}
+    {% endwith %}
+    {% endfor %}
+</div>
+{% endblock %}
