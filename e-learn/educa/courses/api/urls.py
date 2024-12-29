@@ -23,5 +23,11 @@ urlpatterns = [
      #   views.SubjectDetailView.as_view(),  # Link this URL to the SubjectDetailView class
       #  name='subject_detail'  # Name the URL for easy reference in templates and views
    # ),
-    path('', include(router.urls)),
+#    path('', include(router.urls)),
+#
+ #   path(
+  #      'courses/<pk>/enroll/',
+   #     views.CourseEnrollView.as_view(),
+    #    name='course_enroll'
+#    ),
 ]
