@@ -2,7 +2,111 @@ from django.db.models import Count
 # Importing the necessary modules from Django REST Framework
 from rest_framework import serializers
 # Importing the Subject model from the courses app
-from courses.models import Course, Module, Subject
+from courses.models import Content, Course, Module, Subject
+
+class ItemRelatedField(serializers.RelatedField):
+    """
+    Custom serializer field to render a related item.
+
+    This custom `RelatedField` is used to render a related object in a specific format.
+    In this case, the field calls the `render()` method of the related object to return
+    a specific representation.
+
+    Methods:
+        to_representation: Converts the related object into a custom representation.
+    """
+
+    def to_representation(self, value):
+        """
+        Converts the related object to a custom representation.
+
+        This method is used to return a specific representation of the related object. 
+        In this case, it calls the `render()` method of the `value` (the related object).
+
+        Args:
+            value (object): The related object to be serialized.
+
+        Returns:
+            str: The custom representation of the related object as returned by the `render()` method.
+        """
+        return value.render()
+
+class ContentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `Content` model.
+
+    This serializer is used to convert the `Content` model instances into JSON data
+    that can be sent as a response. It includes a custom `ItemRelatedField` for the
+    `item` field to control how related objects are represented.
+
+    Fields:
+        order (int): The order of the content.
+        item (ItemRelatedField): The related item to be rendered in a custom format.
+    """
+
+    item = ItemRelatedField(read_only=True)
+
+    class Meta:
+        model = Content
+        fields = ['order', 'item']
+
+
+class ModuleWithContentsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `Module` model with its associated `Contents`.
+
+    This serializer is used to represent a `Module` instance along with its related `Contents`.
+    The `contents` field is serialized using the `ContentSerializer` to provide a detailed representation
+    of the associated content items for that module.
+
+    Fields:
+        order (int): The order of the module in the course.
+        title (str): The title of the module.
+        description (str): A description of the module.
+        contents (List[ContentSerializer]): A list of content items related to the module, serialized with `ContentSerializer`.
+    """
+
+    contents = ContentSerializer(many=True)
+
+    class Meta:
+        model = Module
+        fields = ['order', 'title', 'description', 'contents']
+
+
+class CourseWithContentsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `Course` model with its associated `Modules` and `Contents`.
+
+    This serializer is used to represent a `Course` instance along with its related `Modules`.
+    Each module is serialized using the `ModuleWithContentsSerializer`, which also includes the
+    associated content items for that module.
+
+    Fields:
+        id (int): The unique identifier for the course.
+        subject (SubjectSerializer): The subject associated with the course.
+        title (str): The title of the course.
+        slug (str): A URL-friendly identifier for the course.
+        overview (str): A brief overview or description of the course.
+        created (datetime): The creation date of the course.
+        owner (UserSerializer): The owner (creator) of the course.
+        modules (List[ModuleWithContentsSerializer]): A list of modules in the course, each serialized with `ModuleWithContentsSerializer`.
+    """
+
+    modules = ModuleWithContentsSerializer(many=True)
+
+    class Meta:
+        model = Course
+        fields = [
+            'id',
+            'subject',
+            'title',
+            'slug',
+            'overview',
+            'created',
+            'owner',
+            'modules'
+        ]
+
 
 class ModuleSerializer(serializers.ModelSerializer):
     """
@@ -97,4 +201,3 @@ class CourseSerializer(serializers.ModelSerializer):
             'owner',
             'modules'
         ]
-

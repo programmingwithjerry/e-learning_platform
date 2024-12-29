@@ -10,6 +10,8 @@ from courses.api.serializers import CourseSerializer, SubjectSerializer
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from courses.api.permissions import IsEnrolled
+from courses.api.serializers import CourseWithContentsSerializer
 
 class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -42,6 +44,16 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
         course = self.get_object()
         course.students.add(request.user)
         return Response({'enrolled': True})
+
+    @action(
+        detail=True,
+        methods=['get'],
+        serializer_class=CourseWithContentsSerializer,
+        authentication_classes=[BasicAuthentication],
+        permission_classes=[IsAuthenticated, IsEnrolled]
+    )
+    def contents(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
 # View to list all Subject objects using a GET request
 # class SubjectListView(generics.ListAPIView):
@@ -84,8 +96,8 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardPagination  # Apply pagination to the subject list
 
 
-#class CourseEnrollView(APIView):
-    """
+"""class CourseEnrollView(APIView):
+
     A view for enrolling a user in a course.
 
     This view handles the enrollment of a user in a course by adding the user to the
@@ -99,12 +111,12 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
         request (HttpRequest): The HTTP request object containing the user and course information.
         pk (int): The primary key of the course to enroll the user in.
         format (str, optional): The format for the response (usually not necessary).
-    """
+
  #   authentication_classes = [BasicAuthentication]
  #   permission_classes = [IsAuthenticated]
 
  #   def post(self, request, pk, format=None):
-        """
+
         Enroll the authenticated user in the course identified by `pk`.
 
         This method will:
@@ -119,10 +131,11 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
 
         Returns:
             Response: A JSON response indicating whether the enrollment was successful.
-        """
+
         # Retrieve the course by primary key, or return a 404 if not found
   #      course = get_object_or_404(Course, pk=pk)
         # Add the authenticated user to the course's students
   #      course.students.add(request.user)
         # Return a response indicating success
   #      return Response({'enrolled': True})
+"""
