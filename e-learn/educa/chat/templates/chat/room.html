@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+<!-- Extend the base template to reuse common layout and structure -->
+
+{% block title %}
+<!-- Set the title block specific to the chat room -->
+Chat room for "{{ course.title }}"
+{% endblock %}
+
+{% block content %}
+<!-- Main content block for the chat room -->
+<div id="chat">
+    <!-- Container for displaying chat messages -->
+</div>
+<div id="chat-input">
+    <!-- Input section for sending chat messages -->
+    <input id="chat-message-input" type="text">
+    <!-- Text input for the user's chat message -->
+    <input id="chat-message-submit" type="submit" value="Send">
+    <!-- Submit button for sending the chat message -->
+</div>
+{% endblock %}
+
+{% block include_js %}
+<!-- Block reserved for including JavaScript files specific to this template -->
+{% endblock %}
+
+{% block domready %}
+<!-- Block reserved for JavaScript code to be executed once the DOM is ready -->
+{% endblock %}
