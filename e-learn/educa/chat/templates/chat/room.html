@@ -21,9 +21,82 @@ Chat room for "{{ course.title }}"
 {% endblock %}
 
 {% block include_js %}
-<!-- Block reserved for including JavaScript files specific to this template -->
+{{ course.id|json_script:"course-id" }}
 {% endblock %}
 
 {% block domready %}
-<!-- Block reserved for JavaScript code to be executed once the DOM is ready -->
+<!-- JavaScript code executed once the DOM is fully loaded -->
+
+<!-- Parse the course ID from the HTML element with the ID 'course-id' -->
+<!-- The 'course-id' element contains the course ID in JSON format -->
+const courseId = JSON.parse(
+    document.getElementById('course-id').textContent
+);
+
+<!-- Construct the WebSocket URL dynamically based on the current host and course ID -->
+const url = 'ws://' + window.location.host +
+    '/ws/chat/room/' + courseId + '/';
+
+<!-- Initialize a WebSocket connection to the constructed URL -->
+const chatSocket = new WebSocket(url);
+
+<!-- Define a callback for handling messages received from the WebSocket -->
+chatSocket.onmessage = function(event) {
+    <!-- Parse the incoming JSON data -->
+    const data = JSON.parse(event.data);
+
+    <!-- Get the chat container element -->
+    const chat = document.getElementById('chat');
+
+    <!-- Append the received message to the chat container -->
+    chat.innerHTML += '<div class="message">' +
+        data.message + '</div>';
+
+    <!-- Automatically scroll to the bottom of the chat -->
+    chat.scrollTop = chat.scrollHeight;
+};
+
+<!-- Define a callback for handling unexpected WebSocket closures -->
+chatSocket.onclose = function(event) {
+    console.error('Chat socket closed unexpectedly'); <!-- Log an error message to the console -->
+};
+
+<!-- Get the input field element where users type their chat messages -->
+const input = document.getElementById('chat-message-input');
+
+<!-- Get the submit button element that sends the chat messages -->
+const submitButton = document.getElementById('chat-message-submit');
+
+<!-- Add an event listener to the submit button for the 'click' event -->
+submitButton.addEventListener('click', function(event) {
+    <!-- Retrieve the message typed by the user in the input field -->
+    const message = input.value;
+
+    <!-- Check if the input field contains a non-empty message -->
+    if (message) {
+        <!-- Send the message to the WebSocket server in JSON format -->
+        chatSocket.send(JSON.stringify({'message': message}));
+
+        <!-- Clear the input field after sending the message -->
+        input.value = '';
+
+        <!-- Set focus back to the input field for the user to type a new message -->
+        input.focus();
+    }
+});
+
+<!-- Add an event listener to the input field for the 'keypress' event -->
+input.addEventListener('keypress', function(event) {
+    <!-- Check if the pressed key is 'Enter' -->
+    if (event.key === 'Enter') {
+        <!-- Cancel the default action, if needed -->
+        event.preventDefault();
+
+        <!-- Trigger the click event on the submit button -->
+        submitButton.click();
+    }
+});
+
+<!-- Set focus to the input field when the chat page loads -->
+input.focus();
 {% endblock %}
