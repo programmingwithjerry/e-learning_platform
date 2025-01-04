@@ -22,6 +22,7 @@ Chat room for "{{ course.title }}"
 
 {% block include_js %}
 {{ course.id|json_script:"course-id" }}
+{{ request.user.username|json_script:"request-user" }}
 {% endblock %}
 
 {% block domready %}
@@ -31,6 +32,9 @@ Chat room for "{{ course.title }}"
 <!-- The 'course-id' element contains the course ID in JSON format -->
 const courseId = JSON.parse(
     document.getElementById('course-id').textContent
+);
+const requestUser = JSON.parse(
+    document.getElementById('request-user').textContent
 );
 
 <!-- Construct the WebSocket URL dynamically based on the current host and course ID -->
@@ -42,20 +46,18 @@ const chatSocket = new WebSocket(url);
 
 <!-- Define a callback for handling messages received from the WebSocket -->
 chatSocket.onmessage = function(event) {
-    <!-- Parse the incoming JSON data -->
-    const data = JSON.parse(event.data);
-
-    <!-- Get the chat container element -->
-    const chat = document.getElementById('chat');
-
-    <!-- Append the received message to the chat container -->
-    chat.innerHTML += '<div class="message">' +
-        data.message + '</div>';
-
-    <!-- Automatically scroll to the bottom of the chat -->
-    chat.scrollTop = chat.scrollHeight;
-};
-
+        const data = JSON.parse(event.data);
+        const chat = document.getElementById('chat');
+        const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: true};
+        const datetime = new Date(data.datetime).toLocaleString('en', dateOptions);
+        const isMe = data.user === requestUser;
+        const source = isMe ? 'me' : 'other';
+        const name = isMe ? 'Me' : data.user;
+        chat.innerHTML += '<div class="message ' + source + '">' +
+                        '<strong>' + name + '</strong> ' +
+                        '<span class="date">' + datetime + '</span><br>' +
+                        data.message + '</div>';
+        chat.scrollTop = chat.scrollHeight;
 <!-- Define a callback for handling unexpected WebSocket closures -->
 chatSocket.onclose = function(event) {
     console.error('Chat socket closed unexpectedly'); <!-- Log an error message to the console -->
