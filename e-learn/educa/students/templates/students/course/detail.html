@@ -1,44 +1,55 @@
 {% extends "base.html" %}
+{% load cache %}
 
 {% block title %}
-<!-- Display the title of the object in the page title -->
-{{ object.title }}
+  <!-- Display the title of the course -->
+  {{ object.title }}
 {% endblock %}
 
 {% block content %}
-<!-- Main content block starts here -->
-<h1>
-    <!-- Display the title of the selected module -->
+  <!-- Display the title of the currently selected module -->
+  <h1>
     {{ module.title }}
-</h1>
-<div class="contents">
-    <!-- List of modules -->
+  </h1>
+  <div class="contents">
     <h3>Modules</h3>
+    <!-- List all modules associated with the course -->
     <ul id="modules">
-        {% for m in object.modules.all %}
+      {% for m in object.modules.all %}
+        <!-- Highlight the currently selected module -->
         <li data-id="{{ m.id }}" {% if m == module %}class="selected"{% endif %}>
-            <!-- Link to the detail view of each module -->
-            <a href="{% url "student_course_detail_module" object.id m.id %}">
-                <span>
-                    Module <span class="order">{{ m.order|add:1 }}</span>
-                </span>
-                <br>
-                {{ m.title }}
-            </a>
+          <!-- Link to the detail view of the module -->
+          <a href="{% url "student_course_detail_module" object.id m.id %}">
+            <span>
+              Module <span class="order">{{ m.order|add:1 }}</span>
+            </span>
+            <br>
+            <!-- Display the title of the module -->
+            {{ m.title }}
+          </a>
         </li>
-        {% empty %}
-        <!-- Message displayed when no modules are available -->
+      {% empty %}
+        <!-- Display a message if no modules are available -->
         <li>No modules yet.</li>
-        {% endfor %}
+      {% endfor %}
     </ul>
-</div>
-<div class="module">
-    <!-- Render the contents of the selected module -->
-    {% for content in module.contents.all %}
-    {% with item=content.item %}
-    <h2>{{ item.title }}</h2>
-    {{ item.render }}
-    {% endwith %}
-    {% endfor %}
-</div>
+    <h3>
+      <!-- Link to the course chat room -->
+      <a href="{% url "chat:course_chat_room" object.id %}">
+        Course chat room
+      </a>
+    </h3>
+  </div>
+  <div class="module">
+    <!-- Cache the module contents for 600 seconds -->
+    {% cache 600 module_contents module %}
+      {% for content in module.contents.all %}
+        {% with item=content.item %}
+          <!-- Display the title and rendered content of each item -->
+          <h2>{{ item.title }}</h2>
+          {{ item.render }}
+        {% endwith %}
+      {% endfor %}
+    {% endcache %}
+  </div>
 {% endblock %}
