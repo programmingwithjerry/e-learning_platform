@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
 
+
 class IsEnrolled(BasePermission):
     """
     Custom permission to check if the user is enrolled in a specific course.
