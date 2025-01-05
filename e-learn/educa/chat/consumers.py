@@ -1,95 +1,106 @@
+"""
+This module defines the `ChatConsumer` for handling WebSocket connections in a chat application.
+
+The consumer handles WebSocket events such as connecting, disconnecting, and message processing.
+Messages are sent to a group corresponding to a course's chat room, and they are also persisted
+to the database for chat history.
+
+Classes:
+    ChatConsumer: Manages WebSocket communication for course chat rooms.
+"""
+
 import json
+
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
 from django.utils import timezone
+
+from chat.models import Message
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     """
-    ChatConsumer is a WebSocket consumer that handles communication in a chat room.
-    It allows clients to connect to a specific course chat room, send messages,
-    and receive messages from other participants in real-time using Django Channels.
+    WebSocket consumer for handling real-time chat in course rooms.
+
+    Methods:
+        connect: Establishes a WebSocket connection and joins the corresponding chat group.
+        disconnect: Removes the connection from the chat group when the socket is closed.
+        persist_message: Saves chat messages to the database.
+        receive: Handles incoming WebSocket messages, broadcasting them to the group and persisting.
+        chat_message: Sends a broadcasted message back to the WebSocket client.
     """
 
     async def connect(self):
         """
-        Handles the WebSocket connection.
+        Handles a new WebSocket connection.
 
-        This method is called when the WebSocket connection is established.
-        It retrieves the course ID from the URL, joins the corresponding room group,
-        and accepts the connection.
-
-        The room group name is dynamically created based on the course ID.
+        Retrieves the user and course ID from the WebSocket scope, assigns the user to a group
+        corresponding to the chat room, and accepts the WebSocket connection.
         """
         self.user = self.scope['user']
-        # Retrieve course ID from the URL route parameters
         self.id = self.scope['url_route']['kwargs']['course_id']
-        # Construct the room group name using the course ID
         self.room_group_name = f'chat_{self.id}'
 
-        # Join the room group to receive messages sent to this group
-        await self.channel_layer.group_add(
-            self.room_group_name,  # The room group name
-            self.channel_name      # The unique channel name for this connection
-        )
+        # Join the room group
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         # Accept the WebSocket connection
         await self.accept()
 
     async def disconnect(self, close_code):
         """
-        Handles the WebSocket disconnection.
+        Handles WebSocket disconnection.
 
-        This method is called when the WebSocket connection is closed. It removes
-        the WebSocket connection from the room group, so it no longer receives
-        messages.
+        Removes the user from the chat group corresponding to the room.
+        """
+        # Leave the room group
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def persist_message(self, message: str):
+        """
+        Persists a chat message to the database.
 
         Args:
-            close_code (int): The close code provided when the WebSocket is closed.
+            message: The message content to save.
         """
-        # Leave the room group to stop receiving messages
-        await self.channel_layer.group_discard(
-            self.room_group_name,  # The room group name
-            self.channel_name      # The unique channel name for this connection
+        await Message.objects.acreate(
+            user=self.user, course_id=self.id, content=message
         )
 
-    async def receive(self, text_data):
+    async def receive(self, text_data: str):
         """
-        Handles receiving a message from the WebSocket.
+        Handles incoming WebSocket messages.
 
-        This method is called when a message is received through the WebSocket.
-        It parses the message from JSON format and sends it to the room group
-        to be broadcast to other participants.
+        Parses the message data, sends it to the group for broadcast, and persists it
+        in the database.
 
-        Arg:
-            text_data (str): The message data received from the WebSocket, in JSON format.
+        Args:
+            text_data: JSON-formatted string containing the chat message.
         """
-        # Parse the received message from JSON
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         now = timezone.now()
 
-        # Send the message to the room group
+        # Send message to the room group
         await self.channel_layer.group_send(
-            self.room_group_name,  # The room group name
+            self.room_group_name,
             {
-                'type': 'chat_message',  # The type of message being sent
-                'message': message,      # The message content
+                'type': 'chat_message',
+                'message': message,
                 'user': self.user.username,
                 'datetime': now.isoformat(),
-            }
+            },
         )
 
-    async def chat_message(self, event):
-        """
-        Handles receiving a message from the room group.
+        # Persist the message to the database
+        await self.persist_message(message)
 
-        This method is called when a message is received from the room group.
-        It sends the message to the WebSocket to be displayed to the client.
-
-        Arg:
-            event (dict): The event data received from the room group.
-                          Contains the message to be sent to the WebSocket.
+    async def chat_message(self, event: dict):
         """
-        # Send the message to the WebSocket
+        Handles messages broadcasted by the group.
+
+        Sends the received message back to the WebSocket client.
+
+        Args:
+            event: Dictionary containing the broadcasted message data.
+        """
         await self.send(text_data=json.dumps(event))

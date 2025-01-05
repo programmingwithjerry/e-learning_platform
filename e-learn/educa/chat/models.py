@@ -3,38 +3,26 @@ from django.db import models
 
 class Message(models.Model):
     """
-    A model representing a chat message in a course's chat room.
-    Stores information about the user who sent the message, the course it belongs to,
-    the message content, and the time it was sent.
+    Represents a chat message sent by a user in a specific course.
+    Stores information about the sender, recipient course, message content,
+    and timestamp when the message was sent.
     """
-    # The user who sent the message
-    # Uses a foreign key to the user model specified in AUTH_USER_MODEL
-    # Protects the message from being deleted if the user is deleted
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Reference to the user model
-        on_delete=models.PROTECT,  # Prevent deletion if the user exists
-        related_name='chat_messages'  # Allows reverse lookup from the user model
+        settings.AUTH_USER_MODEL,  # Links to the user model
+        on_delete=models.PROTECT,  # Prevent deletion of user if messages exist
+        related_name='chat_messages',  # Related name for reverse lookup
     )
-
-    # The course to which the message belongs
-    # Uses a foreign key to the Course model
-    # Protects the message from being deleted if the course is deleted
     course = models.ForeignKey(
-        'courses.Course',  # Reference to the Course model
-        on_delete=models.PROTECT,  # Prevent deletion if the course exists
-        related_name='chat_messages'  # Allows reverse lookup from the course model
+        'courses.Course',  # Links to the Course model
+        on_delete=models.PROTECT,  # Prevent deletion of course if messages exist
+        related_name='chat_messages',  # Related name for reverse lookup
     )
-
-    # The content of the message
-    content = models.TextField()
-
-    # Timestamp when the message was sent
-    # Automatically sets the value to the current date and time when the message is created
-    sent_on = models.DateTimeField(auto_now_add=True)
+    content = models.TextField()  # Field to store the content of the message
+    sent_on = models.DateTimeField(auto_now_add=True)  # Timestamp when the message was sent
 
     def __str__(self):
         """
-        Returns a string representation of the message.
-        Includes the user's name, the course name, and the timestamp of the message.
+        Return a string representation of the message including the user,
+        the course, and the timestamp when the message was sent.
         """
         return f'{self.user} on {self.course} at {self.sent_on}'

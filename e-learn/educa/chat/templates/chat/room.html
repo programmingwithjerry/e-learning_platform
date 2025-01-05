@@ -1,104 +1,107 @@
 {% extends "base.html" %}
-<!-- Extend the base template to reuse common layout and structure -->
 
 {% block title %}
-<!-- Set the title block specific to the chat room -->
-Chat room for "{{ course.title }}"
+  <!-- Title block: Sets the title of the page dynamically based on the course title -->
+  Chat room for "{{ course.title }}"
 {% endblock %}
 
 {% block content %}
-<!-- Main content block for the chat room -->
-<div id="chat">
-    <!-- Container for displaying chat messages -->
-</div>
-<div id="chat-input">
-    <!-- Input section for sending chat messages -->
+  <div id="chat">
+    <!-- Loop through the latest messages to display them -->
+    {% for message in latest_messages %}
+      <div class="message {% if message.user == request.user %}me{% else %}other{% endif %}">
+        <!-- Display the username and message timestamp -->
+        <strong>{{ message.user.username }}</strong>
+        <span class="date">
+          {{ message.sent_on|date:"Y.m.d H:i A" }}
+        </span>
+        <br>
+        <!-- Display the message content -->
+        {{ message.content }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="chat-input">
+    <!-- Input box for sending a chat message -->
     <input id="chat-message-input" type="text">
-    <!-- Text input for the user's chat message -->
     <input id="chat-message-submit" type="submit" value="Send">
-    <!-- Submit button for sending the chat message -->
-</div>
+  </div>
 {% endblock %}
 
 {% block include_js %}
-{{ course.id|json_script:"course-id" }}
-{{ request.user.username|json_script:"request-user" }}
+  <!-- Include dynamic data as JSON for use in JavaScript -->
+  {{ course.id|json_script:"course-id" }}
+  {{ request.user.username|json_script:"request-user" }}
 {% endblock %}
 
 {% block domready %}
-<!-- JavaScript code executed once the DOM is fully loaded -->
-
-<!-- Parse the course ID from the HTML element with the ID 'course-id' -->
-<!-- The 'course-id' element contains the course ID in JSON format -->
-const courseId = JSON.parse(
+  <!-- Retrieve the course ID and user data from JSON script tags -->
+  const courseId = JSON.parse(
     document.getElementById('course-id').textContent
-);
-const requestUser = JSON.parse(
+  );
+  const requestUser = JSON.parse(
     document.getElementById('request-user').textContent
-);
+  );
 
-<!-- Construct the WebSocket URL dynamically based on the current host and course ID -->
-const url = 'ws://' + window.location.host +
-    '/ws/chat/room/' + courseId + '/';
+  <!-- Create WebSocket connection to the chat server -->
+  const url = 'ws://' + window.location.host +
+              '/ws/chat/room/' + courseId + '/';
+  const chatSocket = new WebSocket(url);
 
-<!-- Initialize a WebSocket connection to the constructed URL -->
-const chatSocket = new WebSocket(url);
+  <!-- Handle incoming messages -->
+  chatSocket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    const chat = document.getElementById('chat');
 
-<!-- Define a callback for handling messages received from the WebSocket -->
-chatSocket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        const chat = document.getElementById('chat');
-        const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: true};
-        const datetime = new Date(data.datetime).toLocaleString('en', dateOptions);
-        const isMe = data.user === requestUser;
-        const source = isMe ? 'me' : 'other';
-        const name = isMe ? 'Me' : data.user;
-        chat.innerHTML += '<div class="message ' + source + '">' +
-                        '<strong>' + name + '</strong> ' +
-                        '<span class="date">' + datetime + '</span><br>' +
-                        data.message + '</div>';
-        chat.scrollTop = chat.scrollHeight;
-<!-- Define a callback for handling unexpected WebSocket closures -->
-chatSocket.onclose = function(event) {
-    console.error('Chat socket closed unexpectedly'); <!-- Log an error message to the console -->
-};
+    <!-- Format the received message timestamp -->
+    const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: true};
+    const datetime = new Date(data.datetime).toLocaleString('en', dateOptions);
 
-<!-- Get the input field element where users type their chat messages -->
-const input = document.getElementById('chat-message-input');
+    <!-- Determine if the message is from the current user or another user -->
+    const isMe = data.user === requestUser;
+    const source = isMe ? 'me' : 'other';
+    const name = isMe ? 'Me' : data.user;
 
-<!-- Get the submit button element that sends the chat messages -->
-const submitButton = document.getElementById('chat-message-submit');
+    <!-- Append the new message to the chat div -->
+    chat.innerHTML += '<div class="message ' + source + '">' +
+                      '<strong>' + name + '</strong> ' +
+                      '<span class="date">' + datetime + '</span><br>' +
+                      data.message + '</div>';
+    <!-- Automatically scroll to the latest message -->
+    chat.scrollTop = chat.scrollHeight;
+  };
 
-<!-- Add an event listener to the submit button for the 'click' event -->
-submitButton.addEventListener('click', function(event) {
-    <!-- Retrieve the message typed by the user in the input field -->
+  <!-- Handle WebSocket closure errors -->
+  chatSocket.onclose = function(event) {
+    console.error('Chat socket closed unexpectedly');
+  };
+
+  const input = document.getElementById('chat-message-input');
+  const submitButton = document.getElementById('chat-message-submit');
+
+  <!-- Send message when the submit button is clicked -->
+  submitButton.addEventListener('click', function(event) {
     const message = input.value;
-
-    <!-- Check if the input field contains a non-empty message -->
     if (message) {
-        <!-- Send the message to the WebSocket server in JSON format -->
-        chatSocket.send(JSON.stringify({'message': message}));
-
-        <!-- Clear the input field after sending the message -->
-        input.value = '';
-
-        <!-- Set focus back to the input field for the user to type a new message -->
-        input.focus();
+      <!-- Send the message as JSON -->
+      chatSocket.send(JSON.stringify({'message': message}));
+      <!-- Clear the input field and focus it for the next message -->
+      input.value = '';
+      input.focus();
     }
-});
+  });
 
-<!-- Add an event listener to the input field for the 'keypress' event -->
-input.addEventListener('keypress', function(event) {
-    <!-- Check if the pressed key is 'Enter' -->
+  <!-- Allow sending a message by pressing the Enter key -->
+  input.addEventListener('keypress', function(event) {
     if (event.key === 'Enter') {
-        <!-- Cancel the default action, if needed -->
-        event.preventDefault();
-
-        <!-- Trigger the click event on the submit button -->
-        submitButton.click();
+      <!-- Prevent the default Enter key action -->
+      event.preventDefault();
+      <!-- Simulate a click event on the submit button -->
+      submitButton.click();
     }
-});
+  });
 
-<!-- Set focus to the input field when the chat page loads -->
-input.focus();
+  <!-- Set focus to the input field on page load -->
+  input.focus();
 {% endblock %}
