@@ -1,157 +1,147 @@
-# Import the necessary models module from Django
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
-#from .fields import OrderField
 from django.db import models
+from django.template.loader import render_to_string
 
-# Subject model represents the subject categories for courses
+from .fields import OrderField
+
+
 class Subject(models.Model):
-    # Title of the subject with a max length of 200 characters
-    title = models.CharField(max_length=200)
-    # Unique slug for the subject, used in URLs
-    slug = models.SlugField(max_length=200, unique=True)
+    """
+    Model representing a subject or category for courses.
+    """
+
+    title = models.CharField(max_length=200)  # Title of the subject
+    slug = models.SlugField(max_length=200, unique=True)  # Unique identifier for the subject in URLs
 
     class Meta:
-        # Order subjects alphabetically by their title
-        ordering = ['title']
+        ordering = ['title']  # Orders subjects alphabetically by title
 
     def __str__(self):
-        # String representation of the subject
         return self.title
 
 
-# Course model represents individual courses under specific subjects
 class Course(models.Model):
-    # User who created the course (owner), linked via ForeignKey
+    """
+    Model representing a course with details about its owner, subject, and enrolled students.
+    """
+
     owner = models.ForeignKey(
-        User,  # Reference to Django's built-in User model
-        related_name='courses_created',  # Reverse relationship name
-        on_delete=models.CASCADE  # Delete courses if the user is deleted
-    )
-    # Subject under which the course falls
+        User, related_name='courses_created', on_delete=models.CASCADE
+    )  # User who created the course
     subject = models.ForeignKey(
-        Subject,  # Reference to the Subject model
-        related_name='courses',  # Reverse relationship name
-        on_delete=models.CASCADE #Delete courses if the subject is deleted
-    )
-    # Title of the course with a max length of 200 characters
-    title = models.CharField(max_length=200)
-    # Unique slug for the course, used in URLs
-    slug = models.SlugField(max_length=200, unique=True)
-    # Detailed overview/description of the course
-    overview = models.TextField()
-    # Timestamp for when the course is created, auto-set on creation
-    created = models.DateTimeField(auto_now_add=True)
+        Subject, related_name='courses', on_delete=models.CASCADE
+    )  # The subject this course belongs to
+    title = models.CharField(max_length=200)  # Title of the course
+    slug = models.SlugField(max_length=200, unique=True)  # Unique identifier for the course in URLs
+    overview = models.TextField()  # Overview or description of the course
+    created = models.DateTimeField(auto_now_add=True)  # Timestamp for when the course was created
+    students = models.ManyToManyField(
+        User, related_name='courses_joined', blank=True
+    )  # Students enrolled in the course
 
     class Meta:
-        # Order courses by creation date, most recent first
-        ordering = ['-created']
+        ordering = ['-created']  # Orders courses by newest first
 
     def __str__(self):
-        # String representation of the course
         return self.title
 
 
-# Module model represents a unit or section within a specific course
 class Module(models.Model):
-    # ForeignKey linking the module to its parent course
+    """
+    Model representing a module within a course.
+    """
+
     course = models.ForeignKey(
-        Course,  # Reference to the Course model
-        related_name='modules',  # Reverse relationship name
-        on_delete=models.CASCADE  # Delete modules if the course is deleted
-    )
-    # Title of the module with a max length of 200 characters
-    title = models.CharField(max_length=200)
-    # Optional description field for the module
-    description = models.TextField(blank=True)
-    # Order field to determine the module's position within the course
-    order = OrderField(blank=True, for_fields=['course'])
+        Course, related_name='modules', on_delete=models.CASCADE
+    )  # The course this module belongs to
+    title = models.CharField(max_length=200)  # Title of the module
+    description = models.TextField(blank=True)  # Optional description of the module
+    order = OrderField(blank=True, for_fields=['course'])  # Custom order field within the course
 
     class Meta:
-        # Order modules based on the 'order' field
-        ordering = ['order']
+        ordering = ['order']  # Orders modules by their specified order
 
     def __str__(self):
-        # String representation of the module showing its order and title
         return f'{self.order}. {self.title}'
 
 
-"""Content model represents generic content items
-   (text, video, image, file) within a module
-"""
 class Content(models.Model):
-    # ForeignKey linking the content to a specific module
-    module = models.ForeignKey(
-        Module,  # Reference to the Module model
-        related_name='contents',  # Reverse relationship name
-        on_delete=models.CASCADE  # Delete content if the module is deleted
-    )
-    # ForeignKey to the ContentType model for generic relationships
-    content_type = models.ForeignKey(
-        ContentType,  # Reference to Django's ContentType framework
-        on_delete=models.CASCADE, #Delete content ifthe ContentType isdeleted
-        limit_choices_to={  # Restrict choices to specific models
-            'model__in': ('text', 'video', 'image', 'file')
-        }
-    )
-    # PositiveIntegerField to store the ID of the related object
-    object_id = models.PositiveIntegerField()
-    """GenericForeignKey to create a relationship to
-       any model specified in content_type
     """
-    item = GenericForeignKey('content_type', 'object_id')
-    # Custom order field to define the order of content within a module
-    order = OrderField(blank=True, for_fields=['module'])
+    Model representing an item of content in a module, which could be text, video, image, or file.
+    """
+
+    module = models.ForeignKey(
+        Module, related_name='contents', on_delete=models.CASCADE
+    )  # The module this content belongs to
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to={
+            'model__in': ('text', 'video', 'image', 'file')
+        },
+    )  # The type of content (text, video, image, file)
+    object_id = models.PositiveIntegerField()  # ID of the related content object
+    item = GenericForeignKey('content_type', 'object_id')  # Generic relation to the content object
+    order = OrderField(blank=True, for_fields=['module'])  # Custom order field within the module
 
     class Meta:
-        # Order content items by the 'order' field within a module
-        ordering = ['order']
+        ordering = ['order']  # Orders content by their specified order
 
 
-# Base model to define common fields for content types
 class ItemBase(models.Model):
-    # ForeignKey linking the item to its owner (user)
+    """
+    Abstract base class for different types of content items (e.g., Text, File, Image, Video).
+    """
+
     owner = models.ForeignKey(
-        User,  # Reference to Django's built-in User model
-        related_name='%(class)s_related',
-        on_delete=models.CASCADE  # Delete the item if the user is deleted
-    )
-    # Title of the item with a max length of 250 characters
-    title = models.CharField(max_length=250)
-    # Timestamp for when the item is created; auto-set on creation
-    created = models.DateTimeField(auto_now_add=True)
-    # Timestamp for when the item is last updated; auto-updated on save
-    updated = models.DateTimeField(auto_now=True)
+        User, related_name='%(class)s_related', on_delete=models.CASCADE
+    )  # User who created the content item
+    title = models.CharField(max_length=250)  # Title of the content item
+    created = models.DateTimeField(auto_now_add=True)  # Timestamp for when the item was created
+    updated = models.DateTimeField(auto_now=True)  # Timestamp for when the item was last updated
 
     class Meta:
-        # Mark this model as abstract; it won't create a database table
-        abstract = True
+        abstract = True  # Specifies that this is an abstract base class
 
     def __str__(self):
-        # String representation of the item
         return self.title
 
+    def render(self):
+        """
+        Renders the content item using a template specific to its type.
+        """
+        return render_to_string(
+            f'courses/content/{self._meta.model_name}.html',
+            {'item': self},
+        )
 
-# Model for text-based content
+
+# Concrete implementations of content items
 class Text(ItemBase):
-    # Field to store the text content
-    content = models.TextField()
+    """
+    Model representing a text content item.
+    """
+    content = models.TextField()  # Text content
 
 
-# Model for file-based content
 class File(ItemBase):
-    # Field to store uploaded files; files are saved in the 'files' directory
-    file = models.FileField(upload_to='files')
+    """
+    Model representing a file content item.
+    """
+    file = models.FileField(upload_to='files')  # Uploaded file path
 
 
-# Model for image-based content
 class Image(ItemBase):
-    # Field to store uploaded images;images are saved in the'images'directory
-    file = models.FileField(upload_to='images')
+    """
+    Model representing an image content item.
+    """
+    file = models.FileField(upload_to='images')  # Uploaded image path
 
 
-# Model for video-based content
 class Video(ItemBase):
-    # Field to store video URLs
-    url = models.URLField()
+    """
+    Model representing a video content item.
+    """
+    url = models.URLField()  # URL of the video
