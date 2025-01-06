@@ -1,51 +1,56 @@
 {% extends "base.html" %}
 {% load cache %}
 
+<!-- Block for the page title -->
 {% block title %}
-  <!-- Display the title of the course -->
   {{ object.title }}
 {% endblock %}
 
+<!-- Block for the main content -->
 {% block content %}
-  <!-- Display the title of the currently selected module -->
+  <!-- Display the module title -->
   <h1>
     {{ module.title }}
   </h1>
+
+  <!-- Sidebar for listing modules -->
   <div class="contents">
     <h3>Modules</h3>
-    <!-- List all modules associated with the course -->
     <ul id="modules">
+      <!-- Loop through all modules -->
       {% for m in object.modules.all %}
-        <!-- Highlight the currently selected module -->
+        <!-- Highlight the selected module -->
         <li data-id="{{ m.id }}" {% if m == module %}class="selected"{% endif %}>
-          <!-- Link to the detail view of the module -->
           <a href="{% url "student_course_detail_module" object.id m.id %}">
             <span>
               Module <span class="order">{{ m.order|add:1 }}</span>
             </span>
             <br>
-            <!-- Display the title of the module -->
             {{ m.title }}
           </a>
         </li>
       {% empty %}
-        <!-- Display a message if no modules are available -->
+        <!-- Message if no modules are available -->
         <li>No modules yet.</li>
       {% endfor %}
     </ul>
+
+    <!-- Link to the course chat room -->
     <h3>
-      <!-- Link to the course chat room -->
       <a href="{% url "chat:course_chat_room" object.id %}">
         Course chat room
       </a>
     </h3>
   </div>
+
+  <!-- Main area for module content -->
   <div class="module">
-    <!-- Cache the module contents for 600 seconds -->
+    <!-- Cache module contents for 10 minutes -->
     {% cache 600 module_contents module %}
+      <!-- Loop through all contents of the module -->
       {% for content in module.contents.all %}
         {% with item=content.item %}
-          <!-- Display the title and rendered content of each item -->
+          <!-- Render content title and body -->
           <h2>{{ item.title }}</h2>
           {{ item.render }}
         {% endwith %}
