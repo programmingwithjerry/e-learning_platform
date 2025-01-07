@@ -15,37 +15,44 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-# Importing settings from Django configuration
+from courses.views import CourseListView
 from django.conf import settings
-# Importing static file handling for development
 from django.conf.urls.static import static
-# Importing Django's admin module to manage the admin interface
 from django.contrib import admin
-# Importing authentication views for login and logout functionality
 from django.contrib.auth import views as auth_views
-# Importing functions to handle URL routing
 from django.urls import include, path
 
-# Define URL patterns for the project
+# Defining the main urlpatterns for the project
 urlpatterns = [
-    # Path for login page using Django's LoginView
+    # User authentication: Login page
     path(
         'accounts/login/', auth_views.LoginView.as_view(), name='login'
     ),
-    """path(  # This path is commented out (Logout view)
+    # User authentication: Logout page
+    path(
         'accounts/logout/',
         auth_views.LogoutView.as_view(),
-        name='logout'
-    ),"""
-    # Path for admin interface
+        name='logout',
+    ),
+    # Admin site for managing the database and models
     path('admin/', admin.site.urls),
-    # Path for course URLs handled by the 'courses' app
+    # Including URL patterns for the courses app
     path('course/', include('courses.urls')),
+    # Homepage: Displays a list of courses using the CourseListView
+    path('', CourseListView.as_view(), name='course_list'),
+    # Including URL patterns for the students app
+    path('students/', include('students.urls')),
+    # Including API-related URL patterns for the courses app
+    path('api/', include('courses.api.urls', namespace='api')),
+    # Including URL patterns for the chat functionality
+    path('chat/', include('chat.urls', namespace='chat')),
+    # Debug toolbar for development debugging
+    path('__debug__/', include('debug_toolbar.urls')),
 ]
 
-# Add static file handling in development mode
+# If the DEBUG setting is True (development mode)
 if settings.DEBUG:
-    # Serve media files in development mode
+    # Serve media files during development
     urlpatterns += static(
         settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
     )

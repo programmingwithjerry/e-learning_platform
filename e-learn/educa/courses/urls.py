@@ -1,38 +1,96 @@
-# Import the path function to define URL patterns
 from django.urls import path
-# Import views from the current app to associate with the URL patterns
+
 from . import views
 
-# Define the URL patterns for the app
 urlpatterns = [
-    # URL pattern for managing the list of courses
+    # Manage user's courses (list view)
     path(
-        'mine/',  # URL segment for this view
-        views.ManageCourseListView.as_view(),  # View to handle the request
-        name='manage_course_list'  # Name of the URL pattern
+        'mine/',
+        views.ManageCourseListView.as_view(),
+        name='manage_course_list',
     ),
-    # URL pattern for creating a new course
+
+    # Create a new course
     path(
-        'create/',  # URL segment for this view
-        views.CourseCreateView.as_view(),  # View to handle the request
-        name='course_create'  # Name of the URL pattern
+        'create/',
+        views.CourseCreateView.as_view(),
+        name='course_create',
     ),
-    # URL pattern for editing an existing course
+
+    # Edit an existing course identified by its primary key (pk)
     path(
-        '<pk>/edit/',  # URL segment with a placeholder for the primary key
-        views.CourseUpdateView.as_view(),  # View to handle the request
-        name='course_edit'  # Name of the URL pattern
+        '<pk>/edit/',
+        views.CourseUpdateView.as_view(),
+        name='course_edit',
     ),
-    # URL pattern for deleting an existing course
+
+    # Delete an existing course identified by its primary key (pk)
     path(
-        '<pk>/delete/',  #URL segment with a placeholder for the primary key
-        views.CourseDeleteView.as_view(),  # View to handle the request
-        name='course_delete'  # Name of the URL pattern
+        '<pk>/delete/',
+        views.CourseDeleteView.as_view(),
+        name='course_delete',
     ),
-    # URL pattern for updating course modules
+
+    # Update course modules for a specific course identified by its primary key (pk)
     path(
-        '<pk>/module/',  #URL segment with a placeholder for the primary key
-        views.CourseModuleUpdateView.as_view(),  #View to handle the request
-        name='course_module_update'  # Name of the URL pattern
+        '<pk>/module/',
+        views.CourseModuleUpdateView.as_view(),
+        name='course_module_update',
+    ),
+
+    # Create new content for a specific module and content type (model_name)
+    path(
+        'module/<int:module_id>/content/<model_name>/create/',
+        views.ContentCreateUpdateView.as_view(),
+        name='module_content_create',
+    ),
+
+    # Update existing content for a specific module and content type (model_name)
+    path(
+        'module/<int:module_id>/content/<model_name>/<id>/',
+        views.ContentCreateUpdateView.as_view(),
+        name='module_content_update',
+    ),
+
+    # Delete specific content by its ID
+    path(
+        'content/<int:id>/delete/',
+        views.ContentDeleteView.as_view(),
+        name='module_content_delete',
+    ),
+
+    # List all contents in a specific module
+    path(
+        'module/<int:module_id>/',
+        views.ModuleContentListView.as_view(),
+        name='module_content_list',
+    ),
+
+    # Reorder modules for a course
+    path(
+        'module/order/',
+        views.ModuleOrderView.as_view(),
+        name='module_order',
+    ),
+
+    # Reorder content items within a module
+    path(
+        'content/order/',
+        views.ContentOrderView.as_view(),
+        name='content_order',
+    ),
+
+    # List courses filtered by a specific subject (slug)
+    path(
+        'subject/<slug:subject>/',
+        views.CourseListView.as_view(),
+        name='course_list_subject',
+    ),
+
+    # Display details for a specific course identified by its slug
+    path(
+        '<slug:slug>/',
+        views.CourseDetailView.as_view(),
+        name='course_detail',
     ),
 ]
